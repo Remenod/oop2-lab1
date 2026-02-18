@@ -1,15 +1,7 @@
 #include <iostream>
 #include <vector>
+#include <ranges>
 #include <functional>
-
-std::vector<int> Where(const std::vector<int>& arr, std::function<bool(int)> pred) {
-    std::vector<int> result;
-    for (int x : arr) {
-        if (pred(x))
-            result.push_back(x);
-    }
-    return result;
-}
 
 int* WhereManual(int* arr, int length, std::function<bool(int)> pred, int& outLength) {
     int count = 0;
@@ -34,7 +26,7 @@ int main() {
     std::cin >> k;
 
     int n;
-    std::cout << "Enter Arr Elements count: ";
+    std::cout << "Enter Arr len: ";
     std::cin >> n;
 
     int* arr = new int[n];
@@ -47,7 +39,11 @@ int main() {
     std::function<bool(int)> pred = [k](int x){ return x % k == 0; };
 
     // lib method
-    std::vector<int> filtered = Where({arr, arr+n}, pred);
+	auto filteredView = std::ranges::subrange(arr, arr + n)
+                    | std::views::filter(pred);
+
+	std::vector<int> filtered(filteredView.begin(), filteredView.end());
+
     std::cout << "Filtered with lib: ";
     for (int x : filtered) std::cout << x << " ";
     std::cout << "\n";
