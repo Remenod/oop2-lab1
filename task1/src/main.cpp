@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <fstream>
+#include <filesystem>
 
 static const char *FIFO_PATH = "runtime/taskd.fifo";
 
@@ -104,17 +105,23 @@ void send(const std::string &s)
 
 int main(int argc, char **argv)
 {
-    if (argc < 2)
+
+    std::string cmd = argv[1];
+
+    if (argc < 2 || cmd == "help")
     {
         std::cout << "usage:\n"
                      "  app daemon\n"
-                     "  app start-task <name>\n"
-                     "  app stop-task <name>\n"
-                     "  app stop-daemon\n";
+                     "  app stop-daemon\n"
+                     "  app start-task    <name>\n"
+                     "  app stop-task     <name>\n"
+                     "  app restart-task  <name>\n"
+                     "  app list-tasks\n"
+                     "  app add-task      <name> <interval>\n"
+                     "  app edit-task     <name>\n"
+                     "  app set-interval  <name> <interval>\n";
         return 0;
     }
-
-    std::string cmd = argv[1];
 
     if (cmd == "daemon")
     {
