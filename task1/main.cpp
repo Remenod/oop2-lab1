@@ -1,22 +1,21 @@
-#include "Timer.h"
+#include "TaskRunner.h"
+#include <vector>
+#include <memory>
 #include <iostream>
-#include <thread>
 
-void a() {
-    std::cout << "A\n";
-}
+int main()
+{
+    std::vector<std::unique_ptr<TaskRunner>> tasks;
 
-void b() {
-    std::cout << "B\n";
-}
+    while (true)
+    {
+        std::cout << "interval source.cpp > ";
+        Task t;
+        std::cin >> t.interval >> t.sourceFile;
+        t.binaryFile = t.sourceFile + ".out";
 
-int main() {
-    Timer t1(1, a);
-    Timer t2(2, b);
-
-    t1.start();
-    t2.start();
-
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-    return 0;
+        auto runner = std::make_unique<TaskRunner>(t);
+        runner->start();
+        tasks.push_back(std::move(runner));
+    }
 }

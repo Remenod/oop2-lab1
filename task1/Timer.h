@@ -3,7 +3,8 @@
 #include <thread>
 #include <atomic>
 
-class Timer {
+class Timer
+{
     int interval;
     std::function<void()> callback;
     std::thread worker;
