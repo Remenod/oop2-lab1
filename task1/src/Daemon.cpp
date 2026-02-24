@@ -44,10 +44,6 @@ void Daemon::handleCommand(const std::string &line)
         if (tasks.count(name))
             tasks[name]->stop();
     }
-    else if (cmd == "EXIT")
-    {
-        exit(0);
-    }
 }
 
 void Daemon::run()

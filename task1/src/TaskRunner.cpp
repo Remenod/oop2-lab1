@@ -11,10 +11,12 @@ TaskRunner::TaskRunner(const Task &t)
 
 void TaskRunner::start()
 {
-    timer.start();
+    if (!timer.isRunning())
+        timer.start();
 }
 
 void TaskRunner::stop()
 {
-    timer.stop();
+    if (timer.isRunning())
+        timer.stop();
 }

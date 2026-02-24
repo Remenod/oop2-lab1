@@ -14,5 +14,6 @@ public:
     Timer(int seconds, std::function<void()> cb);
     void start();
     void stop();
+    bool isRunning() const { return running; }
     ~Timer();
 };

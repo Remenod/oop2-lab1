@@ -4,22 +4,30 @@
 Timer::Timer(int seconds, std::function<void()> cb)
     : interval(seconds), callback(cb), running(false) {}
 
-void Timer::start() {
+void Timer::start()
+{
+    if (running)
+        return;
     running = true;
-    worker = std::thread([this]() {
+
+    worker = std::thread([this]()
+                         {
         while (running) {
             std::this_thread::sleep_for(std::chrono::seconds(interval));
             if (running) callback();
-        }
-    });
+        } });
 }
 
-void Timer::stop() {
+void Timer::stop()
+{
+    if (!running)
+        return;
     running = false;
     if (worker.joinable())
         worker.join();
 }
 
-Timer::~Timer() {
+Timer::~Timer()
+{
     stop();
 }
