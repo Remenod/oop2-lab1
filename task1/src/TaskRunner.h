@@ -11,4 +11,5 @@ public:
     TaskRunner(const Task &t);
     void start();
     void stop();
+    void setInterval(int seconds);
 };

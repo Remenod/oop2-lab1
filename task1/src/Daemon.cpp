@@ -8,11 +8,13 @@
 
 static const char *FIFO_PATH = "runtime/taskd.fifo";
 
+static const char *TASKS_DIR = "tasks/";
+
 static Task loadTask(const std::string &name)
 {
     Task t;
     t.name = name;
-    t.dir = "tasks/" + name;
+    t.dir = std::string(TASKS_DIR) + name;
 
     std::ifstream cfg(t.dir + "/config.cfg");
     std::string line;
@@ -21,6 +23,7 @@ static Task loadTask(const std::string &name)
         if (line.starts_with("interval="))
             t.interval = std::stoi(line.substr(9));
     }
+
     return t;
 }
 
@@ -42,7 +45,27 @@ void Daemon::handleCommand(const std::string &line)
     else if (cmd == "STOP")
     {
         if (tasks.count(name))
+        {
             tasks[name]->stop();
+            tasks.erase(name);
+        }
+    }
+    else if (cmd == "SET_INTERVAL")
+    {
+        int newInterval;
+        iss >> newInterval;
+
+        if (tasks.count(name))
+        {
+            tasks[name]->stop();
+            tasks[name]->setInterval(newInterval);
+            tasks[name]->start();
+            std::cout << "[daemon] task " << name << " interval set to " << newInterval << "\n";
+        }
+        else
+        {
+            std::cout << "[daemon] task " << name << " not running, config updated\n";
+        }
     }
 }
 

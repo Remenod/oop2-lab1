@@ -31,3 +31,11 @@ Timer::~Timer()
 {
     stop();
 }
+
+void Timer::setInterval(int _interval)
+{
+    if (running)
+        return;
+    if (_interval)
+        interval = _interval;
+}

@@ -15,5 +15,6 @@ public:
     void start();
     void stop();
     bool isRunning() const { return running; }
+    void setInterval(int _interval);
     ~Timer();
 };

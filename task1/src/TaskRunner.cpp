@@ -20,3 +20,10 @@ void TaskRunner::stop()
     if (timer.isRunning())
         timer.stop();
 }
+
+void TaskRunner::setInterval(int seconds)
+{
+    timer.stop();
+    timer.setInterval(seconds);
+    task.interval = seconds;
+}
