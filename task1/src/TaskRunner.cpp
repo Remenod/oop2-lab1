@@ -1,12 +1,12 @@
 #include "TaskRunner.h"
 #include "ProcessRunner.h"
 
-TaskRunner::TaskRunner(Task t)
+TaskRunner::TaskRunner(const Task &t)
     : task(t),
       timer(t.interval, [this]()
-            { run(task.binaryFile); })
+            { run(task.dir + "/task"); })
 {
-    compile(task.sourceFile, task.binaryFile);
+    compile(task.dir + "/task.cpp", task.dir + "/task");
 }
 
 void TaskRunner::start()

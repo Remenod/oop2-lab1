@@ -3,7 +3,7 @@
 
 struct Task
 {
+    std::string name;
     int interval;
-    std::string sourceFile;
-    std::string binaryFile;
+    std::string dir;
 };

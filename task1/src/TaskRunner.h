@@ -8,7 +8,7 @@ class TaskRunner
     Timer timer;
 
 public:
-    TaskRunner(Task t);
+    TaskRunner(const Task &t);
     void start();
     void stop();
 };
