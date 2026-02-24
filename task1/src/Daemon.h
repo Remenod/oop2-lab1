@@ -8,6 +8,7 @@
 class Daemon
 {
     std::unordered_map<std::string, std::unique_ptr<TaskRunner>> tasks;
+    int fifoFd = -1;
 
 public:
     void run();
