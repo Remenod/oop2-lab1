@@ -59,6 +59,37 @@ void setIntervalTask(const std::string &name, int interval)
     std::cout << "[CLI] task '" << name << "' interval set to " << interval << "\n";
 }
 
+void listTasks()
+{
+    namespace fs = std::filesystem;
+
+    if (!fs::exists(TASKS_DIR))
+    {
+        std::cout << "[CLI] no tasks directory found\n";
+        return;
+    }
+
+    for (auto &entry : fs::directory_iterator(TASKS_DIR))
+    {
+        if (entry.is_directory())
+        {
+            std::string name = entry.path().filename().string();
+            std::string cfgPath = entry.path().string() + "/config.cfg";
+            int interval = 0;
+
+            std::ifstream cfg(cfgPath);
+            std::string line;
+            while (std::getline(cfg, line))
+            {
+                if (line.starts_with("interval="))
+                    interval = std::stoi(line.substr(9));
+            }
+
+            std::cout << name << " (interval=" << interval << ")\n";
+        }
+    }
+}
+
 void send(const std::string &s)
 {
     int fd = open(FIFO_PATH, O_WRONLY);
@@ -120,6 +151,10 @@ int main(int argc, char **argv)
         int interval = std::stoi(argv[3]);
         setIntervalTask(name, interval);
         send("SET_INTERVAL " + name + " " + std::to_string(interval) + "\n");
+    }
+    else if (cmd == "list-tasks")
+    {
+        listTasks();
     }
     else if (cmd == "stop-daemon")
     {
