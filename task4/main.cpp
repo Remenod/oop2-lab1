@@ -16,6 +16,10 @@ int main()
             { return x + 3.5; },
         };
 
+    std::cout << "0 <num> - sqrt(num)"
+                 "1 <num> - num^3"
+                 "2 <num> - num + 3.5\n";
+
     std::cin.exceptions(std::ios::failbit | std::ios::badbit);
     try
     {
