@@ -3,6 +3,8 @@
 #include <functional>
 #include <vector>
 #include <cmath>
+#include <sstream>
+#include <string>
 
 int main()
 {
@@ -16,11 +18,10 @@ int main()
             { return x + 3.5; },
         };
 
-    std::cout << "0 <num> - sqrt(num)"
-                 "1 <num> - num^3"
+    std::cout << "0 <num> - sqrt(num)\n"
+                 "1 <num> - num^3\n"
                  "2 <num> - num + 3.5\n";
 
-    std::cin.exceptions(std::ios::failbit | std::ios::badbit);
     try
     {
         while (true)
@@ -28,7 +29,18 @@ int main()
             int jobIndex;
             double x;
 
-            std::cin >> jobIndex >> x;
+            std::string line;
+            std::getline(std::cin, line);
+
+            std::istringstream iss(line);
+
+            iss.exceptions(std::ios::failbit | std::ios::badbit);
+
+            iss >> jobIndex >> x;
+
+            if (!iss.eof())
+                throw std::ios_base::failure("too much data");
+
             std::cout << jobs.at(jobIndex)(x) << std::endl;
         }
     }
