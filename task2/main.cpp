@@ -3,24 +3,22 @@
 #include <ranges>
 #include <functional>
 
-int* WhereManual(int* arr, int length, std::function<bool(int)> pred, int& outLength) {
-    int count = 0;
-    for (int i = 0; i < length; ++i)
-        if (pred(arr[i]))
-            ++count;
+std::vector<int> WhereManual(
+    const std::vector<int> &arr,
+    const std::function<bool(int)> &pred)
+{
+    std::vector<int> result;
+    result.reserve(arr.size());
 
-    outLength = count;
-    int* result = new int[count];
-
-    int idx = 0;
-    for (int i = 0; i < length; ++i)
-        if (pred(arr[i]))
-            result[idx++] = arr[i];
+    for (int x : arr)
+        if (pred(x))
+            result.push_back(x);
 
     return result;
 }
 
-int main() {
+int main()
+{
     int k;
     std::cout << "Enter k: ";
     std::cin >> k;
@@ -29,33 +27,30 @@ int main() {
     std::cout << "Enter Arr len: ";
     std::cin >> n;
 
-    int* arr = new int[n];
-
+    std::vector<int> arr(n);
     std::cout << "Enter " << n << " numbers:\n";
-    for (int i = 0; i < n; ++i) {
-        std::cin >> arr[i];
-    }
+    for (int &x : arr)
+        std::cin >> x;
 
-    std::function<bool(int)> pred = [k](int x){ return x % k == 0; };
+    std::function<bool(int)> pred = [k](int x)
+    {
+        return x % k == 0;
+    };
 
     // lib method
-	auto filteredView = std::ranges::subrange(arr, arr + n)
-                    | std::views::filter(pred);
-
-	std::vector<int> filtered(filteredView.begin(), filteredView.end());
+    auto filteredView = arr | std::views::filter(pred);
+    std::vector<int> filtered(filteredView.begin(), filteredView.end());
 
     std::cout << "Filtered with lib: ";
-    for (int x : filtered) std::cout << x << " ";
+    for (int x : filtered)
+        std::cout << x << " ";
     std::cout << "\n";
 
     // manual method
-    int manualLength;
-    int* manualResult = WhereManual(arr, n, pred, manualLength);
-    std::cout << "Filtered manual: ";
-    for (int i = 0; i < manualLength; ++i)
-        std::cout << manualResult[i] << " ";
-    std::cout << "\n";
+    auto manualResult = WhereManual(arr, pred);
 
-    delete[] manualResult;
-    delete[] arr;
+    std::cout << "Filtered manual: ";
+    for (int x : manualResult)
+        std::cout << x << " ";
+    std::cout << "\n";
 }
