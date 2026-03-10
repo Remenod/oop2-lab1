@@ -1,200 +1,107 @@
-#include <notcurses/notcurses.h>
-#include <vector>
-#include <functional>
-#include <string>
+#include <ftxui/component/component.hpp>
+#include <ftxui/component/screen_interactive.hpp>
+#include <ftxui/dom/elements.hpp>
 
-struct Widget
+using namespace ftxui;
+
+Component CreateHelloWorldWindow(bool *show_signal)
 {
-    int x;
-    int y;
-    bool focused = false;
-
-    virtual void draw(ncplane *p) = 0;
-    virtual void key(ncinput) {}
-    virtual void mouse(ncinput) {}
-    virtual bool focusable() { return true; }
-    virtual ~Widget() {}
-};
-
-struct Checkbox : Widget
-{
-    bool checked = false;
-    std::string label;
-
-    Checkbox(int x, int y, std::string label = "")
+    struct WindowState
     {
-        this->x = x;
-        this->y = y;
-        this->label = label;
-    }
+        int x = 10;
+        int y = 5;
+        int width = 40;
+        int height = 10;
+    };
+    static auto state = std::make_shared<WindowState>();
 
-    void draw(ncplane *p) override
-    {
-        char c = checked ? 'x' : ' ';
-        if (focused)
-            ncplane_printf_yx(p, y, x, "> [%c] %s", c, label.c_str());
-        else
-            ncplane_printf_yx(p, y, x, "  [%c] %s", c, label.c_str());
-    }
+    auto close_btn = Button("Close", [show_signal]
+                            { *show_signal = false; }, ButtonOption::Animated());
 
-    void key(ncinput in) override
-    {
-        if (in.id == ' ')
-            checked = !checked;
-    }
+    auto content = Renderer(close_btn, [close_btn]
+                            { return vbox({text("Hello World") | bold | center | flex,
+                                           close_btn->Render() | center}); });
 
-    void mouse(ncinput in) override
-    {
-        if (in.evtype == NCTYPE_RELEASE)
-            checked = !checked;
-    }
-};
-
-struct Button : Widget
-{
-    std::string text;
-    std::function<void()> onclick;
-
-    Button(int x, int y, std::string text, std::function<void()> fn)
-    {
-        this->x = x;
-        this->y = y;
-        this->text = text;
-        onclick = fn;
-    }
-
-    void draw(ncplane *p) override
-    {
-        if (focused)
-            ncplane_printf_yx(p, y, x, "< %s >", text.c_str());
-        else
-            ncplane_printf_yx(p, y, x, "  %s  ", text.c_str());
-    }
-
-    void key(ncinput in) override
-    {
-        if (in.id == NCKEY_ENTER)
-            onclick();
-    }
-
-    void mouse(ncinput in) override
-    {
-        if (in.evtype == NCTYPE_RELEASE)
-            onclick();
-    }
-};
-
-struct UI
-{
-    std::vector<Widget *> widgets;
-    int focus = 0;
-
-    void add(Widget *w)
-    {
-        widgets.push_back(w);
-    }
-
-    void draw(ncplane *p)
-    {
-        for (auto w : widgets)
-            w->draw(p);
-    }
-
-    void focus_next()
-    {
-        if (widgets.empty())
-            return;
-
-        widgets[focus]->focused = false;
-
-        do
-        {
-            focus = (focus + 1) % widgets.size();
-        } while (!widgets[focus]->focusable());
-
-        widgets[focus]->focused = true;
-    }
-
-    void key(ncinput in)
-    {
-        if (in.evtype == NCTYPE_RELEASE)
-        {
-            if (in.id == '\t')
-            {
-                focus_next();
-                return;
-            }
-
-            widgets[focus]->key(in);
-        }
-    }
-
-    void mouse(ncinput in)
-    {
-        for (auto w : widgets)
-        {
-            if (in.y == w->y)
-                w->mouse(in);
-        }
-    }
-};
+    return Window({
+        .inner = content,
+        .title = "Hello who",
+        .left = &state->x,
+        .top = &state->y,
+        .width = &state->width,
+        .height = &state->height,
+    });
+}
 
 int main()
 {
-    notcurses_options opts{};
-    notcurses *nc = notcurses_init(&opts, nullptr);
-    notcurses_mice_enable(nc, NCMICE_BUTTON_EVENT);
+    auto screen = ScreenInteractive::Fullscreen();
+    Color current_bg_color = Color::Default;
 
-    ncplane *stdplane = notcurses_stdplane(nc);
+    bool is_window_open = false;
+    Component my_window = CreateHelloWorldWindow(&is_window_open);
 
-    UI ui;
+    bool cb1 = false, cb2 = false, cb3 = false;
+    auto transparency_ch = Checkbox("SuperMegaButton absorbs Transparency", &cb1);
+    auto background_ch = Checkbox("SuperMegaButton absorbs Background Color", &cb2);
+    auto hello_world_ch = Checkbox("SuperMegaButton absorbs Hello World", &cb3);
 
-    Checkbox transparency_cb(2, 4, "SuperMegaButton absorbs Transparency");
-    Checkbox bg_color_cb(2, 5, "SuperMegaButton absorbs Background color");
-    Checkbox hello_world_cb(2, 6, "SuperMegaButton absorbs Hello World");
+    auto transparency_b = Button("Transparency", [] {});
+    auto background_b = Button("Background Color", [] {});
+    auto hello_world_b = Button("Hello World", [&]
+                                { 
+                                    is_window_open = true; 
+                                    my_window->TakeFocus(); });
+    auto wide_button = Button("SuperMegaButton", [] {});
 
-    bool quit = false;
+    auto buttons_row = Renderer(
+        Container::Horizontal({transparency_b, background_b, hello_world_b}), [&]
+        { return hbox({
+                     transparency_b->Render() | flex,
+                     background_b->Render() | flex,
+                     hello_world_b->Render() | flex,
+                 }) |
+                 border; });
 
-    Button transparency_button(2, 2, "Transparency", [&] {});
-    Button bg_color_button(19, 2, "Background Color", [&] {});
-    Button hello_world_button(40, 2, "Hello World", [&] {});
-    Button superButton(19, 3, "SuperMegaButton", [&] {});
+    auto checkboxes_col = Renderer(
+        Container::Vertical({transparency_ch, background_ch, hello_world_ch}), [&]
+        { return vbox({
+              transparency_ch->Render(),
+              background_ch->Render(),
+              hello_world_ch->Render(),
+          }); });
 
-    ui.add(&transparency_button);
-    ui.add(&bg_color_button);
-    ui.add(&hello_world_button);
-    ui.add(&superButton);
-    ui.add(&transparency_cb);
-    ui.add(&bg_color_cb);
-    ui.add(&hello_world_cb);
+    auto wide_button_renderer = Renderer(
+        Container::Horizontal({wide_button}), [&]
+        { return hbox({
+                     wide_button->Render() | flex,
+                 }) |
+                 border; });
 
-    ui.widgets[0]->focused = true;
+    auto main_content = Container::Vertical({
+        buttons_row,
+        wide_button_renderer,
+        checkboxes_col,
+    });
 
-    while (!quit)
-    {
-        ncplane_erase(stdplane);
+    auto main_stack = Container::Stacked({
+        main_content,
+        my_window,
+    });
 
-        ui.draw(stdplane);
+    auto final_component = Renderer(main_stack, [&]
+                                    {
+        Element base = main_content->Render();
 
-        notcurses_render(nc);
-
-        ncinput in;
-        timespec ts{0, 0};
-
-        uint32_t key = notcurses_get(nc, &ts, &in);
-
-        if (key == 0)
-            continue;
-
-        if (nckey_mouse_p(key) && in.evtype == NCTYPE_RELEASE)
-        {
-            ui.mouse(in);
+        if (!is_window_open) {
+            return base;
         }
-        else if (!nckey_mouse_p(key))
-        {
-            ui.key(in);
-        }
-    }
 
-    notcurses_stop(nc);
+        return dbox({
+            base,
+            my_window->Render() | color(Color::White)
+        }); });
+
+    screen.Loop(final_component);
+
+    return 0;
 }
