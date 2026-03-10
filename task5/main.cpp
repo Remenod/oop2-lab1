@@ -1,8 +1,11 @@
 #include <ftxui/component/component.hpp>
 #include <ftxui/component/screen_interactive.hpp>
 #include <ftxui/dom/elements.hpp>
+#include <csignal>
 
 using namespace ftxui;
+
+ftxui::ScreenInteractive *g_screen = nullptr;
 
 Component CreateHelloWorldWindow(bool *show_signal)
 {
@@ -32,9 +35,21 @@ Component CreateHelloWorldWindow(bool *show_signal)
     });
 }
 
+void SignalHandler(int signal)
+{
+    if (g_screen)
+    {
+        g_screen->ExitLoopClosure()();
+    }
+}
+
 int main()
 {
+    std::signal(SIGINT, SignalHandler);
+
     auto screen = ScreenInteractive::Fullscreen();
+    g_screen = &screen;
+
     Color current_bg_color = Color::Default;
 
     bool is_window_open = false;
@@ -45,12 +60,41 @@ int main()
     auto background_ch = Checkbox("SuperMegaButton absorbs Background Color", &cb2);
     auto hello_world_ch = Checkbox("SuperMegaButton absorbs Hello World", &cb3);
 
-    auto transparency_b = Button("Transparency", [] {});
-    auto background_b = Button("Background Color", [] {});
-    auto hello_world_b = Button("Hello World", [&]
-                                { 
-                                    is_window_open = true; 
-                                    my_window->TakeFocus(); });
+    auto transparency_b =
+        Button("Transparency", [&]
+               {
+                    static float opacity = 1.0f;
+                    if (opacity > 0.15f)
+                        opacity -= 0.2f;
+                    else 
+                        opacity = 1.0f;
+
+                    char buf[64];
+                    std::snprintf(buf, sizeof(buf), "kitty @ set-background-opacity %.1f &", opacity);
+                    
+                    std::system(buf); });
+
+    auto background_b =
+        Button("Background Color", [&]
+               {
+                    static int color_iter = 0;
+                    color_iter++;
+                    if(color_iter > 4) 
+                    {
+                        current_bg_color = Color::Default; 
+                        color_iter =0;
+                    }
+                    else
+                    {
+                        current_bg_color = Color::RGB(rand()%255, rand()%255, rand()%255); 
+                    } });
+
+    auto hello_world_b =
+        Button("Hello World", [&]
+               { 
+                    is_window_open = true; 
+                    my_window->TakeFocus(); });
+
     auto wide_button = Button("SuperMegaButton", [] {});
 
     auto buttons_row = Renderer(
@@ -88,20 +132,23 @@ int main()
         my_window,
     });
 
-    auto final_component = Renderer(main_stack, [&]
-                                    {
-        Element base = main_content->Render();
+    auto final_component =
+        Renderer(main_stack, [&]
+                 {
+                    Element base = main_content->Render() | bgcolor(current_bg_color);
 
-        if (!is_window_open) {
-            return base;
-        }
+                    if (!is_window_open) {
+                        return base;
+                    }
 
-        return dbox({
-            base,
-            my_window->Render() | color(Color::White)
-        }); });
+                    return dbox({
+                        base,
+                        my_window->Render() | color(Color::White)
+                    }); });
 
     screen.Loop(final_component);
+
+    std::system("kitty @ set-background-opacity 1");
 
     return 0;
 }
