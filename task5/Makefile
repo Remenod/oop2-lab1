@@ -1,14 +1,16 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -O2 $(shell pkg-config gtkmm-4.0 --cflags)
-LDFLAGS  = $(shell pkg-config gtkmm-4.0 --libs)
-SRC = *.cpp
-TARGET = app
+CXXFLAGS = -std=c++20 -Wall -Wextra -O2 -D_DEFAULT_SOURCE -D_XOPEN_SOURCE=600 -lnotcurses -lnotcurses-core
 
-all:
-	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET) $(LDFLAGS)
+TARGET = app
+SRC = *.cpp
+
+all: $(TARGET)
+
+$(TARGET): $(SRC)
+	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET)
 
 clean:
 	rm -f $(TARGET)
 
-run: all
+run: $(TARGET)
 	./$(TARGET)
