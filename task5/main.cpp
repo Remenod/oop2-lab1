@@ -3,18 +3,10 @@
 #include <ftxui/dom/elements.hpp>
 #include <csignal>
 #include <functional>
-#include <iostream>
 
 using namespace ftxui;
 
 ftxui::ScreenInteractive *g_screen = nullptr;
-
-enum Action
-{
-    Transparency,
-    Background,
-    Hello
-};
 
 Component CreateTextWindow(bool *show_signal, std::string message)
 {
@@ -43,7 +35,25 @@ Component CreateTextWindow(bool *show_signal, std::string message)
 void SignalHandler(int signal)
 {
     if (g_screen)
+    {
         g_screen->ExitLoopClosure()();
+    }
+}
+
+void set_kitty_bg(int r, int g, int b)
+{
+    char buf[128];
+    std::snprintf(buf, sizeof(buf),
+                  "kitty @ set-colors background=#%02x%02x%02x &", r, g, b);
+    std::system(buf);
+}
+
+void set_kitty_opacity(float opacity)
+{
+    char buf[64];
+    std::snprintf(buf, sizeof(buf),
+                  "kitty @ set-background-opacity %.2f &", opacity);
+    std::system(buf);
 }
 
 int main()
@@ -57,14 +67,18 @@ int main()
 
     bool is_hello_window_open = false;
     Component hello_window = CreateTextWindow(&is_hello_window_open, "Hello World!!!!");
-
     bool is_sbutton_window_open = false;
     Component sbutton_window =
         CreateTextWindow(&is_sbutton_window_open,
                          "        I am a SuperMegaButton, \n"
                          "and you cannot take that away from me!");
 
-    auto do_transparency = []
+    bool cb1 = false, cb2 = false, cb3 = false;
+    auto transparency_cb = Checkbox("SuperMegaButton absorbs Transparency", &cb1);
+    auto background_cb = Checkbox("SuperMegaButton absorbs Background Color", &cb2);
+    auto hello_world_cb = Checkbox("SuperMegaButton absorbs Hello World", &cb3);
+
+    auto do_transparency = [&]
     {
         static float opacity = 1.0f;
         if (opacity > 0.15f)
@@ -72,9 +86,7 @@ int main()
         else
             opacity = 1.0f;
 
-        char buf[64];
-        std::snprintf(buf, sizeof(buf), "kitty @ set-background-opacity %.1f &", opacity);
-        std::system(buf);
+        set_kitty_opacity(opacity);
     };
 
     auto do_background = [&]
@@ -83,12 +95,15 @@ int main()
         color_iter++;
         if (color_iter > 4)
         {
-            current_bg_color = Color::Default;
+            set_kitty_bg(0x11, 0x11, 0x11);
             color_iter = 0;
         }
         else
         {
-            current_bg_color = Color::RGB(rand() % 255, rand() % 255, rand() % 255);
+            int r = rand() % 256;
+            int g = rand() % 256;
+            int b = rand() % 256;
+            set_kitty_bg(r, g, b);
         }
     };
 
@@ -98,48 +113,6 @@ int main()
         hello_window->TakeFocus();
     };
 
-    std::vector<Action> cb_order;
-    auto add_order = [&](Action a)
-    {
-        if (std::find(cb_order.begin(), cb_order.end(), a) == cb_order.end())
-            cb_order.push_back(a);
-    };
-    auto remove_order = [&](Action a)
-    {
-        cb_order.erase(std::remove(cb_order.begin(), cb_order.end(), a), cb_order.end());
-    };
-
-    bool cb1 = false, cb2 = false, cb3 = false;
-    auto transparency_cb = Checkbox("SuperMegaButton absorbs Transparency", &cb1);
-    transparency_cb |=
-        CatchEvent([&](Event e)
-                   {
-                        if(e == Event::Return){
-                            if(cb1) add_order(Action::Transparency);
-                            else remove_order(Action::Transparency);
-                        }
-                        return false; });
-
-    auto background_cb = Checkbox("SuperMegaButton absorbs Background Color", &cb2);
-    background_cb |=
-        CatchEvent([&](Event e)
-                   {
-                        if(e == Event::Return){
-                            if(cb2) add_order(Action::Background);
-                            else remove_order(Action::Background);
-                        }
-                        return false; });
-
-    auto hello_world_cb = Checkbox("SuperMegaButton absorbs Hello World", &cb3);
-    hello_world_cb |=
-        CatchEvent([&](Event e)
-                   {
-                        if(e == Event::Return){
-                            if(cb3) add_order(Action::Hello);
-                            else remove_order(Action::Hello);
-                        }
-                        return false; });
-
     auto transparency_b = Button("Transparency", do_transparency);
     auto background_b = Button("Background Color", do_background);
     auto hello_world_b = Button("Hello World", do_hello);
@@ -147,17 +120,11 @@ int main()
     auto sbutton =
         Button("SuperMegaButton", [&]
                {
-                    is_sbutton_window_open = true; 
-                    sbutton_window->TakeFocus();
-                    for(auto a : cb_order)
-                    {
-                        switch(a)
-                        {
-                            case Transparency: do_transparency(); break;
-                            case Background:   do_background();   break;
-                            case Hello:        do_hello();        break;
-                        }
-                    } });
+                   if (cb1) do_transparency();
+                   if (cb2) do_background();
+                   if (cb3) do_hello();
+                   is_sbutton_window_open = true; 
+                   sbutton_window->TakeFocus(); });
 
     auto buttons_row = Renderer(
         Container::Horizontal({transparency_b, background_b, hello_world_b}), [&]
@@ -198,7 +165,7 @@ int main()
     auto final_component =
         Renderer(main_stack, [&]
                  {
-                Element base = main_content->Render() | bgcolor(current_bg_color);
+                Element base = main_content->Render();
 
                 std::vector<Element> layers = {base};
 
@@ -212,7 +179,8 @@ int main()
 
     screen.Loop(final_component);
 
-    std::system("kitty @ set-background-opacity 1");
+    set_kitty_opacity(1.0f);
+    set_kitty_bg(0x11, 0x11, 0x11);
 
     return 0;
 }
