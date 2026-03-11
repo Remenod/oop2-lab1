@@ -1,15 +1,14 @@
 #!/bin/bash
 
-CONF="$HOME/.config/hypr/hyprland.conf"
-TMP="$CONF.tmp"
+CONF="$HOME/.config/hypr/shader_block.conf"
+CONF1="$HOME/.config/hypr/_shader_block.conf"
 
-awk 'NR<=3 {sub(/^#/,"")}1' "$CONF" > "$TMP"
-mv "$TMP" "$CONF"
+cat $CONF1 > $CONF
 
 hyprctl reload
 
 sleep 5
 
-awk 'NR<=3 {sub(/^/,"#")}1' "$CONF" > "$TMP"
-mv "$TMP" "$CONF"
+echo "" > $CONF
+
 hyprctl reload
