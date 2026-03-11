@@ -126,6 +126,10 @@ int main()
                    is_sbutton_window_open = true; 
                    sbutton_window->TakeFocus(); });
 
+    auto roll_button =
+        Button("Roll Button", [&]
+               { std::system("bash ../spin.sh &"); });
+
     auto buttons_row = Renderer(
         Container::Horizontal({transparency_b, background_b, hello_world_b}), [&]
         { return hbox({
@@ -150,9 +154,17 @@ int main()
                  }) |
                  border; });
 
+    auto roll_button_renderer = Renderer(
+        Container::Horizontal({roll_button}), [&]
+        { return hbox({
+                     roll_button->Render() | flex,
+                 }) |
+                 border; });
+
     auto main_content = Container::Vertical({
         buttons_row,
         sbutton_renderer,
+        roll_button_renderer,
         checkboxes_col,
     });
 
