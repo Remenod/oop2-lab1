@@ -9,7 +9,7 @@
 #include <thread>
 #include <mutex>
 #include <cstdlib>
-#include <algorithm>
+#include <functional>
 #include <random>
 
 using namespace ftxui;
@@ -26,56 +26,90 @@ std::vector<std::string> judging_results;
 std::mutex results_mutex;
 bool judging_finished = false;
 
-void selection_sort_ref(std::vector<int> &arr)
+template <typename Func>
+long long MeasureTime(Func action)
 {
-    for (size_t i = 0; i < arr.size() - 1; ++i)
-    {
-        size_t min_idx = i;
-        for (size_t j = i + 1; j < arr.size(); ++j)
-        {
-            if (arr[j] < arr[min_idx])
-                min_idx = j;
-        }
-        std::swap(arr[i], arr[min_idx]);
-    }
+    auto start = high_resolution_clock::now();
+    action();
+    auto end = high_resolution_clock::now();
+    return duration_cast<milliseconds>(end - start).count();
 }
 
-void shaker_sort_ref(std::vector<int> &arr)
+std::string GetReferenceCode(int algo, int lang)
 {
-    bool swapped = true;
-    int start = 0, end = arr.size() - 1;
-    while (swapped)
+    if (lang == 2)
     {
-        swapped = false;
-        for (int i = start; i < end; ++i)
+        if (algo == 0)
+            return "n=int(input())\narr=list(map(int, input().split()))\nfor i in range(n):\n m=i\n for j in range(i+1,n):\n  if arr[j]<arr[m]: m=j\n arr[i],arr[m]=arr[m],arr[i]\nprint(' '.join(map(str,arr)))";
+        else
+            return "n=int(input())\narr=list(map(int, input().split()))\nswapped=True\nstart,end=0,n-1\nwhile swapped:\n swapped=False\n for i in range(start,end):\n  if arr[i]>arr[i+1]:\n   arr[i],arr[i+1]=arr[i+1],arr[i]\n   swapped=True\n if not swapped: break\n swapped=False\n end-=1\n for i in range(end-1,start-1,-1):\n  if arr[i]>arr[i+1]:\n   arr[i],arr[i+1]=arr[i+1],arr[i]\n   swapped=True\n start+=1\nprint(' '.join(map(str,arr)))";
+    }
+
+    std::string inc = lang == 0 ? "#include <stdio.h>\n" : "#include <iostream>\nusing namespace std;\n";
+    std::string read = lang == 0 ? "int n; scanf(\"%d\", &n); static int arr[50005]; for(int i=0;i<n;++i) scanf(\"%d\", &arr[i]);\n" : "int n; cin >> n; static int arr[50005]; for(int i=0;i<n;++i) cin >> arr[i];\n";
+    std::string print = lang == 0 ? "for(int i=0;i<n;++i) printf(\"%d \", arr[i]);\n" : "for(int i=0;i<n;++i) cout << arr[i] << \" \";\n";
+
+    std::string sort;
+    if (algo == 0)
+    {
+        sort = "for(int i=0;i<n-1;++i){int m=i; for(int j=i+1;j<n;++j)if(arr[j]<arr[m])m=j; int t=arr[i];arr[i]=arr[m];arr[m]=t;}\n";
+    }
+    else
+    {
+        sort = "int swapped=1, st=0, en=n-1; while(swapped){swapped=0; for(int i=st;i<en;++i)if(arr[i]>arr[i+1]){int t=arr[i];arr[i]=arr[i+1];arr[i+1]=t; swapped=1;} if(!swapped)break; swapped=0; --en; for(int i=en-1;i>=st;--i)if(arr[i]>arr[i+1]){int t=arr[i];arr[i]=arr[i+1];arr[i+1]=t; swapped=1;} ++st;}\n";
+    }
+    return inc + "int main(){\n" + read + sort + print + "return 0;\n}";
+}
+
+void ValidateSorting(std::function<void()> ref_action, std::function<void()> stud_action, int test_num, int N, const std::function<void(std::string)> &ui_cb)
+{
+    std::ofstream in_file("input.txt");
+    in_file << N << "\n";
+    std::mt19937 rng(42 + test_num);
+    for (int i = 0; i < N; ++i)
+        in_file << (rng() % 100000) << " ";
+    in_file.close();
+
+    long long t_eta = MeasureTime(ref_action);
+    long long t_stud = MeasureTime(stud_action);
+
+    std::ifstream out_ref("ref_out.txt");
+    std::ifstream out_stud("stud_out.txt");
+    bool correct = true;
+    for (int i = 0; i < N; ++i)
+    {
+        int val_r, val_s;
+        if (!(out_ref >> val_r) || !(out_stud >> val_s) || val_r != val_s)
         {
-            if (arr[i] > arr[i + 1])
-            {
-                std::swap(arr[i], arr[i + 1]);
-                swapped = true;
-            }
-        }
-        if (!swapped)
+            correct = false;
             break;
-        swapped = false;
-        --end;
-        for (int i = end - 1; i >= start; --i)
-        {
-            if (arr[i] > arr[i + 1])
-            {
-                std::swap(arr[i], arr[i + 1]);
-                swapped = true;
-            }
         }
-        ++start;
     }
-}
+    out_ref.close();
+    out_stud.close();
 
-bool is_time_valid(long long t_eta, long long t_stud)
-{
+    if (!correct)
+    {
+        ui_cb("Test " + std::to_string(test_num) + ": WRONG ANSWER");
+        return;
+    }
+
     long long lower_bound = std::max(0LL, t_eta / 5 - 200);
     long long upper_bound = 5 * t_eta + 200;
-    return t_stud >= lower_bound && t_stud <= upper_bound;
+    std::string time_str = " (Ref: " + std::to_string(t_eta) + "ms, Stud: " + std::to_string(t_stud) + "ms)";
+
+    if (t_stud < lower_bound)
+    {
+        ui_cb("Test " + std::to_string(test_num) + ": TIME ERROR (Too Fast)" + time_str);
+    }
+    else if (t_stud > upper_bound)
+    {
+        ui_cb("Test " + std::to_string(test_num) + ": TIME ERROR (Too Slow)" + time_str);
+    }
+    else
+    {
+        ui_cb("Test " + std::to_string(test_num) + ": ACCEPTED" + time_str);
+    }
 }
 
 void JudgeThread(ScreenInteractive *screen, int problem_idx, int lang_idx, std::string code)
@@ -84,104 +118,62 @@ void JudgeThread(ScreenInteractive *screen, int problem_idx, int lang_idx, std::
     {
         std::lock_guard<std::mutex> lock(results_mutex);
         judging_results.push_back(msg);
-        screen->PostEvent(Event::Custom); // Оновлюємо UI
+        screen->PostEvent(Event::Custom);
     };
 
     std::string ext = (lang_idx == 0) ? ".c" : ((lang_idx == 1) ? ".cpp" : ".py");
-    std::string filename = "solution" + ext;
-    std::ofstream out(filename);
-    out << code;
-    out.close();
+    std::string stud_filename = "stud_sol" + ext;
+    std::string ref_filename = "ref_sol" + ext;
 
-    add_result("[System] Code saved to " + filename);
+    std::ofstream out_stud(stud_filename);
+    out_stud << code;
+    out_stud.close();
+
+    std::ofstream out_ref(ref_filename);
+    out_ref << GetReferenceCode(problem_idx, lang_idx);
+    out_ref.close();
 
     if (lang_idx == 0 || lang_idx == 1)
     {
-        add_result("[System] Compiling...");
-        std::string comp_cmd = (lang_idx == 0) ? "gcc solution.c -o solution.out" : "g++ solution.cpp -o solution.out";
-        int comp_res = std::system(comp_cmd.c_str());
-        if (comp_res != 0)
+        std::string compiler = (lang_idx == 0) ? "gcc" : "g++";
+        if (std::system((compiler + " " + stud_filename + " -o stud_sol.out").c_str()) != 0)
         {
             add_result("Result: COMPILATION ERROR");
             judging_finished = true;
             screen->PostEvent(Event::Custom);
             return;
         }
-        add_result("[System] Compilation Successful.");
+        std::system((compiler + " " + ref_filename + " -o ref_sol.out").c_str());
     }
 
-    std::vector<int> test_sizes = {1000, 5000, 10000, 20000, 30000};
+    std::string cmd_stud = (lang_idx == 2) ? "python3 stud_sol.py < input.txt > stud_out.txt" : "./stud_sol.out < input.txt > stud_out.txt";
+    std::string cmd_ref = (lang_idx == 2) ? "python3 ref_sol.py < input.txt > ref_out.txt" : "./ref_sol.out < input.txt > ref_out.txt";
+
+    std::vector<int> test_sizes = {1000, 3000, 5000, 8000, 12000};
+
+    std::function<void()> run_ref = [&]()
+    { std::system(cmd_ref.c_str()); };
+    std::function<void()> run_stud = [&]()
+    { std::system(cmd_stud.c_str()); };
 
     for (size_t t = 0; t < test_sizes.size(); ++t)
     {
-        int N = test_sizes[t];
-        add_result("Running Test " + std::to_string(t + 1) + " (N=" + std::to_string(N) + ")...");
+        add_result("Running Test " + std::to_string(t + 1) + " (N=" + std::to_string(test_sizes[t]) + ")...");
+        ValidateSorting(run_ref, run_stud, t + 1, test_sizes[t], add_result);
 
-        std::vector<int> arr(N);
-        std::mt19937 rng(42 + t);
-        for (int i = 0; i < N; ++i)
-            arr[i] = rng() % 100000;
-
-        std::vector<int> ref_arr = arr;
-
-        auto start_eta = high_resolution_clock::now();
-        if (problem_idx == 0)
-            selection_sort_ref(ref_arr);
-        else
-            shaker_sort_ref(ref_arr);
-        auto end_eta = high_resolution_clock::now();
-        long long t_eta = duration_cast<milliseconds>(end_eta - start_eta).count();
-
-        std::ofstream in_file("input.txt");
-        in_file << N << "\n";
-        for (int x : arr)
-            in_file << x << " ";
-        in_file.close();
-
-        std::string run_cmd = (lang_idx == 2) ? "python3 solution.py < input.txt > output.txt"
-                                              : "./solution.out < input.txt > output.txt";
-
-        auto start_stud = high_resolution_clock::now();
-        int run_res = std::system(run_cmd.c_str());
-        auto end_stud = high_resolution_clock::now();
-        long long t_stud = duration_cast<milliseconds>(end_stud - start_stud).count();
-
-        if (run_res != 0)
+        bool has_error = false;
         {
-            add_result("Test " + std::to_string(t + 1) + ": RUNTIME ERROR");
-            break;
-        }
-
-        std::ifstream out_file("output.txt");
-        bool is_correct = true;
-        for (int i = 0; i < N; ++i)
-        {
-            int val;
-            if (!(out_file >> val) || val != ref_arr[i])
+            std::lock_guard<std::mutex> lock(results_mutex);
+            if (judging_results.back().find("ACCEPTED") == std::string::npos)
             {
-                is_correct = false;
-                break;
+                has_error = true;
             }
         }
-        out_file.close();
-
-        if (!is_correct)
-        {
-            add_result("Test " + std::to_string(t + 1) + ": WRONG ANSWER");
+        if (has_error)
             break;
-        }
-        else if (!is_time_valid(t_eta, t_stud))
-        {
-            add_result("Test " + std::to_string(t + 1) + ": TIME ERROR (Ref: " + std::to_string(t_eta) + "ms, Stud: " + std::to_string(t_stud) + "ms)");
-            break;
-        }
-        else
-        {
-            add_result("Test " + std::to_string(t + 1) + ": ACCEPTED (Ref: " + std::to_string(t_eta) + "ms, Stud: " + std::to_string(t_stud) + "ms)");
-        }
     }
 
-    add_result("[System] Judging Complete.");
+    add_result("Judging Complete.");
     judging_finished = true;
     screen->PostEvent(Event::Custom);
 }
@@ -250,14 +242,12 @@ int main()
             }
         }
 
-        auto layout = vbox({
+        return vbox({
             text("Live Judging Results") | bold | center,
             separator(),
             vbox(results_elements) | flex,
             judging_finished ? btn_finish->Render() | center : text("Judging in progress...") | blink | center
-        }) | border | flex;
-        
-        return layout; });
+        }) | border | flex; });
 
     auto main_container = Container::Tab({renderer1, renderer2, renderer3}, (int *)&current_state);
 
