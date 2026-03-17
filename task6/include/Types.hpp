@@ -10,5 +10,6 @@ enum SolveLanguage
 enum SolveProblem
 {
     SelectionSort = 0,
-    ShakerSort
+    ShakerSort,
+    QuickSort
 };

@@ -14,7 +14,7 @@ struct AppState
 {
     AppScreen current_screen = AppScreen::ProblemSelection;
 
-    const std::vector<std::string> problems = {"Selection Sort", "Shaker Sort"};
+    const std::vector<std::string> problems = {"Selection Sort", "Shaker Sort", "Quick Sort"};
     const std::vector<std::string> languages = {"C", "C++", "Python"};
 
     int selected_problem = 0;

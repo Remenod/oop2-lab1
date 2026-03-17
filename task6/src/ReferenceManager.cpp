@@ -17,6 +17,8 @@ protected:
             return "selection_sort";
         case SolveProblem::ShakerSort:
             return "shaker_sort";
+        case SolveProblem::QuickSort:
+            return "quick_sort";
         default:
             return "unknown";
         }
