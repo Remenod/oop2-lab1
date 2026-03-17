@@ -95,7 +95,7 @@ int main()
         color_iter++;
         if (color_iter > 4)
         {
-            set_kitty_bg(0x11, 0x11, 0x11);
+            set_kitty_bg(0x18, 0x18, 0x18);
             color_iter = 0;
         }
         else
@@ -192,7 +192,7 @@ int main()
     screen.Loop(final_component);
 
     set_kitty_opacity(1.0f);
-    set_kitty_bg(0x11, 0x11, 0x11);
+    set_kitty_bg(0x18, 0x18, 0x18);
 
     return 0;
 }
