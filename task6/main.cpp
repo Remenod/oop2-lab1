@@ -38,30 +38,103 @@ long long MeasureTime(Func action)
 std::string GetReferenceCode(int algo, int lang)
 {
     if (lang == 2)
-    {
-        if (algo == 0)
-            return "n=int(input())\narr=list(map(int, input().split()))\nfor i in range(n):\n m=i\n for j in range(i+1,n):\n  if arr[j]<arr[m]: m=j\n arr[i],arr[m]=arr[m],arr[i]\nprint(' '.join(map(str,arr)))";
-        else
-            return "n=int(input())\narr=list(map(int, input().split()))\nswapped=True\nstart,end=0,n-1\nwhile swapped:\n swapped=False\n for i in range(start,end):\n  if arr[i]>arr[i+1]:\n   arr[i],arr[i+1]=arr[i+1],arr[i]\n   swapped=True\n if not swapped: break\n swapped=False\n end-=1\n for i in range(end-1,start-1,-1):\n  if arr[i]>arr[i+1]:\n   arr[i],arr[i+1]=arr[i+1],arr[i]\n   swapped=True\n start+=1\nprint(' '.join(map(str,arr)))";
-    }
+        return algo == 0
+                   ? "n=int(input())\n"
+                     "arr=list(map(int, input().split()))\n"
+                     "for i in range(n):\n"
+                     " m=i\n"
+                     " for j in range(i+1,n):\n"
+                     "  if arr[j]<arr[m]: m=j\n"
+                     " arr[i],arr[m]=arr[m],arr[i]\n"
+                     "print(' '.join(map(str,arr)))"
 
-    std::string inc = lang == 0 ? "#include <stdio.h>\n" : "#include <iostream>\nusing namespace std;\n";
-    std::string read = lang == 0 ? "int n; scanf(\"%d\", &n); static int arr[50005]; for(int i=0;i<n;++i) scanf(\"%d\", &arr[i]);\n" : "int n; cin >> n; static int arr[50005]; for(int i=0;i<n;++i) cin >> arr[i];\n";
-    std::string print = lang == 0 ? "for(int i=0;i<n;++i) printf(\"%d \", arr[i]);\n" : "for(int i=0;i<n;++i) cout << arr[i] << \" \";\n";
+                   : "n=int(input())\n"
+                     "arr=list(map(int, input().split()))\n"
+                     "swapped=True\n"
+                     "start,end=0,n-1\n"
+                     "while swapped:\n"
+                     " swapped=False\n"
+                     " for i in range(start,end):\n"
+                     "  if arr[i]>arr[i+1]:\n"
+                     "   arr[i],arr[i+1]=arr[i+1],arr[i]\n"
+                     "   swapped=True\n"
+                     " if not swapped: break\n"
+                     " swapped=False\n"
+                     " end-=1\n"
+                     " for i in range(end-1,start-1,-1):\n"
+                     "  if arr[i]>arr[i+1]:\n"
+                     "   arr[i],arr[i+1]=arr[i+1],arr[i]\n"
+                     "   swapped=True\n"
+                     " start+=1\n"
+                     "print(' '.join(map(str,arr)))";
 
-    std::string sort;
-    if (algo == 0)
-    {
-        sort = "for(int i=0;i<n-1;++i){int m=i; for(int j=i+1;j<n;++j)if(arr[j]<arr[m])m=j; int t=arr[i];arr[i]=arr[m];arr[m]=t;}\n";
-    }
-    else
-    {
-        sort = "int swapped=1, st=0, en=n-1; while(swapped){swapped=0; for(int i=st;i<en;++i)if(arr[i]>arr[i+1]){int t=arr[i];arr[i]=arr[i+1];arr[i+1]=t; swapped=1;} if(!swapped)break; swapped=0; --en; for(int i=en-1;i>=st;--i)if(arr[i]>arr[i+1]){int t=arr[i];arr[i]=arr[i+1];arr[i+1]=t; swapped=1;} ++st;}\n";
-    }
+    std::string inc = lang == 0
+                          ? "#include <stdio.h>\n"
+
+                          : "#include <iostream>\n"
+                            "using namespace std;\n";
+    std::string read = lang == 0
+                           ? "int n; scanf(\"%d\", &n); "
+                             "static int arr[50005]; "
+                             "for(int i=0;i<n;++i) "
+                             "    scanf(\"%d\", &arr[i]);\n"
+
+                           : "int n; "
+                             "cin >> n; "
+                             "static int arr[50005]; "
+                             "for(int i=0;i<n;++i) "
+                             "    cin >> arr[i];\n";
+    std::string print = lang == 0
+                            ? "for(int i=0;i<n;++i) "
+                              "printf(\"%d \", arr[i]);\n"
+                            : "for(int i=0;i<n;++i) "
+                              "    cout << arr[i] << \" \";\n";
+
+    std::string sort = algo == 0
+                           ? "for(int i=0;i<n-1;++i)"
+                             "{"
+                             "    int m=i;"
+                             "    for(int j=i+1;j<n;++j)"
+                             "        if(arr[j]<arr[m])m=j; "
+                             "    int t=arr[i];"
+                             "    arr[i]=arr[m];"
+                             "    arr[m]=t;"
+                             "}\n"
+
+                           : "int swapped=1, st=0, en=n-1; "
+                             "while(swapped)"
+                             "{"
+                             "    swapped=0; "
+                             "    for(int i=st;i<en;++i)"
+                             "    if(arr[i]>arr[i+1])"
+                             "    {"
+                             "        int t=arr[i];"
+                             "        arr[i]=arr[i+1];"
+                             "        arr[i+1]=t; swapped=1;"
+                             "    } "
+                             "    if(!swapped)break; "
+                             "    swapped=0; "
+                             "    --en;"
+                             "    for(int i=en-1;i>=st;--i)"
+                             "    if(arr[i]>arr[i+1])"
+                             "    {"
+                             "        int t=arr[i];"
+                             "        arr[i]=arr[i+1];"
+                             "        arr[i+1]=t; "
+                             "        swapped=1;"
+                             "    }"
+                             "    ++st;"
+                             "}\n";
+
     return inc + "int main(){\n" + read + sort + print + "return 0;\n}";
 }
 
-void ValidateSorting(std::function<void()> ref_action, std::function<void()> stud_action, int test_num, int N, const std::function<void(std::string)> &ui_cb)
+void ValidateSorting(
+    std::function<void()> ref_action,
+    std::function<void()> stud_action,
+    int test_num,
+    int N,
+    const std::function<void(std::string)> &ui_cb)
 {
     std::ofstream in_file("input.txt");
     in_file << N << "\n";
@@ -146,8 +219,12 @@ void JudgeThread(ScreenInteractive *screen, int problem_idx, int lang_idx, std::
         std::system((compiler + " " + ref_filename + " -o ref_sol.out").c_str());
     }
 
-    std::string cmd_stud = (lang_idx == 2) ? "python3 stud_sol.py < input.txt > stud_out.txt" : "./stud_sol.out < input.txt > stud_out.txt";
-    std::string cmd_ref = (lang_idx == 2) ? "python3 ref_sol.py < input.txt > ref_out.txt" : "./ref_sol.out < input.txt > ref_out.txt";
+    std::string cmd_stud = (lang_idx == 2)
+                               ? "python3 stud_sol.py < input.txt > stud_out.txt"
+                               : "./stud_sol.out < input.txt > stud_out.txt";
+    std::string cmd_ref = (lang_idx == 2)
+                              ? "python3 ref_sol.py < input.txt > ref_out.txt"
+                              : "./ref_sol.out < input.txt > ref_out.txt";
 
     std::vector<int> test_sizes = {1000, 3000, 5000, 8000, 12000};
 
@@ -158,16 +235,15 @@ void JudgeThread(ScreenInteractive *screen, int problem_idx, int lang_idx, std::
 
     for (size_t t = 0; t < test_sizes.size(); ++t)
     {
-        add_result("Running Test " + std::to_string(t + 1) + " (N=" + std::to_string(test_sizes[t]) + ")...");
+        add_result("Running Test " + std::to_string(t + 1) +
+                   " (N=" + std::to_string(test_sizes[t]) + ")...");
         ValidateSorting(run_ref, run_stud, t + 1, test_sizes[t], add_result);
 
         bool has_error = false;
         {
             std::lock_guard<std::mutex> lock(results_mutex);
             if (judging_results.back().find("ACCEPTED") == std::string::npos)
-            {
                 has_error = true;
-            }
         }
         if (has_error)
             break;
@@ -198,7 +274,13 @@ int main()
                                              btn_next->Render() | center}) |
                                        border; });
 
-    std::string code_content = "// Read N, then N integers. Sort them and print.\n#include <iostream>\nusing namespace std;\n\nint main() {\n    int n; cin >> n;\n    // your code here\n    return 0;\n}";
+    std::string code_content = "// Read N, then N integers. Sort them and print.\n"
+                               "#include <iostream>\nusing namespace std;\n\n"
+                               "int main() {\n"
+                               "    int n; cin >> n;\n"
+                               " // your code here\n"
+                               "    return 0;\n"
+                               "}";
     InputOption input_opt;
     input_opt.multiline = true;
     auto code_input = Input(&code_content, "Type your code here...", input_opt);
@@ -207,8 +289,9 @@ int main()
     std::vector<std::string> languages = {"C", "C++", "Python"};
     auto lang_dropdown = Dropdown(&languages, &selected_lang);
 
-    auto btn_submit = Button("Submit Code", [&]
-                             {
+    auto btn_submit =
+        Button("Submit Code", [&]
+               {
         judging_results.clear();
         judging_finished = false;
         current_state = AppState::Judging;
