@@ -20,7 +20,6 @@ Component BuildProblemSelectionView(AppState &state)
         {
             return vbox(
                        {
-                           //
                            text("DMOJ Offline TUI - Select Problem") | bold | center,
                            separator(),
                            problem_menu->Render() | border,
@@ -35,19 +34,36 @@ Component BuildCodeEditorView(AppState &state, JudgeEngine &engine)
     InputOption input_opt;
     input_opt.multiline = true;
     auto code_input = Input(&state.code_content, "Type your code here...", input_opt);
+
+    auto btn_clear_code = Button(
+        "Clear Code",
+        [&state]
+        { state.code_content = ""; });
+
     auto lang_dropdown = Dropdown(&state.languages, &state.selected_lang);
 
-    auto btn_submit = Button("Submit Code", [&state, &engine]
-                             {
-        state.current_screen = AppScreen::JudgingResults;
-        engine.RunJudgingAsync(state); }, ButtonOption::Animated(Color::Green));
+    auto btn_submit = Button(
+        "Submit Code",
+        [&state, &engine]
+        {
+            state.current_screen = AppScreen::JudgingResults;
+            engine.RunJudgingAsync(state);
+        },
+        ButtonOption::Animated(Color::Green));
 
     auto btn_back = Button(
         "Back",
         [&state]
         { state.current_screen = AppScreen::ProblemSelection; });
 
-    auto container = Container::Vertical({code_input, lang_dropdown, btn_submit, btn_back});
+    auto container = Container::Vertical(
+        {
+            code_input,
+            btn_clear_code,
+            lang_dropdown,
+            btn_submit,
+            btn_back,
+        });
 
     return Renderer(
         container,
@@ -58,6 +74,7 @@ Component BuildCodeEditorView(AppState &state, JudgeEngine &engine)
                            text("Code Editor - " + state.problems[state.selected_problem]) | bold | center,
                            separator(),
                            code_input->Render() | flex | border,
+                           hbox({btn_clear_code->Render()}),
                            hbox({text("Language: ") | vcenter, lang_dropdown->Render()}),
                            hbox({btn_back->Render(), filler(), btn_submit->Render()}) //
                        }) |
