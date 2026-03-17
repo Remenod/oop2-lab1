@@ -8,7 +8,9 @@ find_package(ftxui REQUIRED)
 
 add_executable(judgment
     main.cpp
+    src/JudgeEngine.cpp
     src/ReferenceManager.cpp
+    src/UIViews.cpp
 )
 
 target_include_directories(judgment PRIVATE
