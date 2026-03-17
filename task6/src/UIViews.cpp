@@ -20,12 +20,19 @@ Component BuildProblemSelectionView(AppState &state)
         {
             return vbox(
                        {
-                           text("Offline Judgment - Select Problem") | bold | center,
+                           text("Offline Judgment - Select Problem") //
+                               | bold                                //
+                               | center,
+
                            separator(),
-                           problem_menu->Render() | border,
-                           btn_next->Render() | center //
-                       }) |
-                   border;
+
+                           problem_menu->Render() //
+                               | border,
+
+                           btn_next->Render() //
+                               | center       //
+                       })                     //
+                   | border;
         });
 }
 
@@ -37,7 +44,8 @@ Component BuildCodeEditorView(AppState &state, JudgeEngine &engine)
     input_opt.transform = [](InputState state)
     {
         if (state.focused)
-            return state.element | color(Color::White);
+            return state.element //
+                   | color(Color::White);
         return state.element;
     };
 
@@ -79,14 +87,34 @@ Component BuildCodeEditorView(AppState &state, JudgeEngine &engine)
         {
             return vbox(
                        {
-                           text("Code Editor - " + state.problems[state.selected_problem]) | bold | center,
+                           text("Code Editor - " + state.problems[state.selected_problem]) //
+                               | bold                                                      //
+                               | center,
+
                            separator(),
-                           code_input->Render() | flex | border,
+
+                           code_input->Render() //
+                               | flex           //
+                               | border,
+
                            hbox({btn_clear_code->Render()}),
-                           hbox({text("Language: ") | vcenter, lang_dropdown->Render()}),
-                           hbox({btn_back->Render(), filler(), btn_submit->Render()}) //
-                       }) |
-                   border | flex;
+
+                           hbox(
+                               {
+                                   text("Language: ") //
+                                       | vcenter,
+                                   lang_dropdown->Render() //
+                               }),
+
+                           hbox(
+                               {
+                                   btn_back->Render(),  //
+                                   filler(),            //
+                                   btn_submit->Render() //
+                               })                       //
+                       })                               //
+                   | border                             //
+                   | flex;
         });
 }
 
@@ -114,20 +142,33 @@ Component BuildResultsView(AppState &state)
                     Color c = Color::White;
                     if (res.find("ACCEPTED") != std::string::npos)
                         c = Color::Green;
-                    if (res.find("ERROR") != std::string::npos || res.find("WRONG") != std::string::npos)
+                    if (res.find("ERROR") != std::string::npos ||
+                        res.find("WRONG") != std::string::npos)
                         c = Color::Red;
+
                     results_elements.push_back(text(res) | color(c));
                 }
             }
 
             return vbox(
                        {
-                           text("Live Judging Results") | bold | center,
+                           text("Live Judging Results") //
+                               | bold                   //
+                               | center,
+
                            separator(),
-                           vbox(results_elements) | flex,
-                           is_finished ? btn_finish->Render() | center
-                                       : text("Judging in progress...") | blink | center //
-                       }) |
-                   border | flex;
+
+                           vbox(results_elements) //
+                               | flex,
+
+                           is_finished
+                               ? btn_finish->Render() //
+                                     | center
+                               : text("Judging in progress...") //
+                                     | blink                    //
+                                     | center                   //
+                       })                                       //
+                   | border                                     //
+                   | flex;
         });
 }
