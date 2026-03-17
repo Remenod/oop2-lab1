@@ -169,7 +169,8 @@ void ValidateSorting(
 
     long long lower_bound = std::max(0LL, t_eta / 5 - 200);
     long long upper_bound = 5 * t_eta + 200;
-    std::string time_str = " (Ref: " + std::to_string(t_eta) + "ms, Stud: " + std::to_string(t_stud) + "ms)";
+    std::string time_str =
+        " (Ref: " + std::to_string(t_eta) + "ms, Stud: " + std::to_string(t_stud) + "ms)";
 
     if (t_stud < lower_bound)
     {
@@ -194,7 +195,11 @@ void JudgeThread(ScreenInteractive *screen, int problem_idx, int lang_idx, std::
         screen->PostEvent(Event::Custom);
     };
 
-    std::string ext = (lang_idx == 0) ? ".c" : ((lang_idx == 1) ? ".cpp" : ".py");
+    std::string ext = (lang_idx == 0)
+                          ? ".c"
+                          : ((lang_idx == 1)
+                                 ? ".cpp"
+                                 : ".py");
     std::string stud_filename = "stud_sol" + ext;
     std::string ref_filename = "ref_sol" + ext;
 
@@ -219,19 +224,19 @@ void JudgeThread(ScreenInteractive *screen, int problem_idx, int lang_idx, std::
         std::system((compiler + " " + ref_filename + " -o ref_sol.out").c_str());
     }
 
-    std::string cmd_stud = (lang_idx == 2)
-                               ? "python3 stud_sol.py < input.txt > stud_out.txt"
-                               : "./stud_sol.out < input.txt > stud_out.txt";
-    std::string cmd_ref = (lang_idx == 2)
-                              ? "python3 ref_sol.py < input.txt > ref_out.txt"
-                              : "./ref_sol.out < input.txt > ref_out.txt";
+    auto cmd_stud = (lang_idx == 2)
+                        ? "python3 stud_sol.py < input.txt > stud_out.txt"
+                        : "./stud_sol.out < input.txt > stud_out.txt";
+    auto cmd_ref = (lang_idx == 2)
+                       ? "python3 ref_sol.py < input.txt > ref_out.txt"
+                       : "./ref_sol.out < input.txt > ref_out.txt";
 
     std::vector<int> test_sizes = {1000, 3000, 5000, 8000, 12000};
 
     std::function<void()> run_ref = [&]()
-    { std::system(cmd_ref.c_str()); };
+    { std::system(cmd_ref); };
     std::function<void()> run_stud = [&]()
-    { std::system(cmd_stud.c_str()); };
+    { std::system(cmd_stud); };
 
     for (size_t t = 0; t < test_sizes.size(); ++t)
     {
@@ -267,12 +272,13 @@ int main()
                            { current_state = AppState::CodeInput; }, ButtonOption::Animated());
 
     auto screen1 = Container::Vertical({problem_menu, btn_next});
-    auto renderer1 = Renderer(screen1, [&]
-                              { return vbox({text("DMOJ Offline TUI - Select Problem") | bold | center,
-                                             separator(),
-                                             problem_menu->Render() | border,
-                                             btn_next->Render() | center}) |
-                                       border; });
+    auto renderer1 =
+        Renderer(screen1, [&]
+                 { return vbox({text("DMOJ Offline TUI - Select Problem") | bold | center,
+                                separator(),
+                                problem_menu->Render() | border,
+                                btn_next->Render() | center}) |
+                          border; });
 
     std::string code_content = "// Read N, then N integers. Sort them and print.\n"
                                "#include <iostream>\nusing namespace std;\n\n"
@@ -292,47 +298,72 @@ int main()
     auto btn_submit =
         Button("Submit Code", [&]
                {
-        judging_results.clear();
-        judging_finished = false;
-        current_state = AppState::Judging;
-        std::thread(JudgeThread, &screen, selected_problem, selected_lang, code_content).detach(); }, ButtonOption::Animated(Color::Green));
+                    judging_results.clear();
+                    judging_finished = false;
+                    current_state = AppState::Judging;
+                    std::thread(
+                            JudgeThread, 
+                            &screen, 
+                            selected_problem, 
+                            selected_lang, 
+                            code_content).detach(); }, ButtonOption::Animated(Color::Green));
 
     auto btn_back = Button("Back", [&]
                            { current_state = AppState::ProblemSelection; });
 
     auto screen2 = Container::Vertical({code_input, lang_dropdown, btn_submit, btn_back});
-    auto renderer2 = Renderer(screen2, [&]
-                              { return vbox({text("Code Editor - " + problems[selected_problem]) | bold | center,
-                                             separator(),
-                                             code_input->Render() | flex | border,
-                                             hbox({text("Language: ") | vcenter, lang_dropdown->Render()}),
-                                             hbox({btn_back->Render(), filler(), btn_submit->Render()})}) |
-                                       border | flex; });
+    auto renderer2 =
+        Renderer(screen2, [&]
+                 { return vbox(
+                              {text("Code Editor - " + problems[selected_problem]) | bold | center,
+                               separator(),
+                               code_input->Render() | flex | border,
+                               hbox({text("Language: ") | vcenter, lang_dropdown->Render()}),
+                               hbox({btn_back->Render(), filler(), btn_submit->Render()})}) |
+                          border | flex; });
 
     auto btn_finish = Button("Return to Menu", [&]
                              { current_state = AppState::ProblemSelection; });
     auto screen3 = Container::Vertical({btn_finish});
-    auto renderer3 = Renderer(screen3, [&]
-                              {
-        std::vector<Element> results_elements;
-        {
-            std::lock_guard<std::mutex> lock(results_mutex);
-            for (const auto& res : judging_results) {
-                Color c = Color::White;
-                if (res.find("ACCEPTED") != std::string::npos) c = Color::Green;
-                if (res.find("ERROR") != std::string::npos || res.find("WRONG") != std::string::npos) c = Color::Red;
-                results_elements.push_back(text(res) | color(c));
-            }
-        }
+    auto renderer3 =
+        Renderer(screen3, [&]
+                 {
+                    std::vector<Element> results_elements;
+                    {
+                        std::lock_guard<std::mutex> lock(results_mutex);
+                        for (const auto& res : judging_results) {
+                            Color c = Color::White;
+                            if (res.find("ACCEPTED") != std::string::npos)
+                            {
+                                c = Color::Green;
+                            }
+                            if (res.find("ERROR") != std::string::npos || 
+                                res.find("WRONG") != std::string::npos)
+                            {
+                                c = Color::Red;
+                            }
+                            results_elements.push_back(text(res) | color(c));
+                        }
+                    }
 
-        return vbox({
-            text("Live Judging Results") | bold | center,
-            separator(),
-            vbox(results_elements) | flex,
-            judging_finished ? btn_finish->Render() | center : text("Judging in progress...") | blink | center
-        }) | border | flex; });
+                    return vbox(
+                        {
+                            text("Live Judging Results") | bold | center,
+                            separator(),
+                            vbox(results_elements) | flex,
+                            judging_finished 
+                                ? btn_finish->Render() | center 
+                                : text("Judging in progress...") | blink | center
+                        }) | border | flex; });
 
-    auto main_container = Container::Tab({renderer1, renderer2, renderer3}, (int *)&current_state);
+    auto main_container =
+        Container::Tab(
+            {
+                renderer1,
+                renderer2,
+                renderer3,
+            },
+            (int *)&current_state);
 
     screen.Loop(main_container);
 
