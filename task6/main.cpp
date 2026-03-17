@@ -3,12 +3,12 @@
 #include <ftxui/dom/elements.hpp>
 #include <iostream>
 #include <fstream>
+#include <filesystem>
 #include <vector>
 #include <string>
 #include <chrono>
 #include <thread>
 #include <mutex>
-#include <cstdlib>
 #include <functional>
 #include <random>
 #include "CodeGenerators.hpp"
@@ -43,7 +43,7 @@ void ValidateSorting(
     int N,
     const std::function<void(std::string)> &ui_cb)
 {
-    std::ofstream in_file("input.txt");
+    std::ofstream in_file("runtime/input.txt");
     in_file << N << "\n";
     std::mt19937 rng(42 + test_num);
     for (int i = 0; i < N; ++i)
@@ -53,8 +53,8 @@ void ValidateSorting(
     long long t_eta = MeasureTime(ref_action);
     long long t_stud = MeasureTime(stud_action);
 
-    std::ifstream out_ref("ref_out.txt");
-    std::ifstream out_stud("stud_out.txt");
+    std::ifstream out_ref("runtime/ref_out.txt");
+    std::ifstream out_stud("runtime/stud_out.txt");
     bool correct = true;
     for (int i = 0; i < N; ++i)
     {
@@ -102,13 +102,15 @@ void JudgeThread(ScreenInteractive *screen, int problem_idx, int lang_idx, std::
         screen->PostEvent(Event::Custom);
     };
 
+    std::filesystem::create_directories("runtime");
+
     std::string ext = (lang_idx == 0)
                           ? ".c"
                           : ((lang_idx == 1)
                                  ? ".cpp"
                                  : ".py");
-    std::string stud_filename = "stud_sol" + ext;
-    std::string ref_filename = "ref_sol" + ext;
+    std::string stud_filename = "./runtime/stud_sol" + ext;
+    std::string ref_filename = "./runtime/ref_sol" + ext;
 
     std::ofstream out_stud(stud_filename);
     out_stud << code;
@@ -122,22 +124,22 @@ void JudgeThread(ScreenInteractive *screen, int problem_idx, int lang_idx, std::
     if (lang_idx == 0 || lang_idx == 1)
     {
         std::string compiler = (lang_idx == 0) ? "gcc" : "g++";
-        if (std::system((compiler + " " + stud_filename + " -o stud_sol.out").c_str()) != 0)
+        if (std::system((compiler + " " + stud_filename + " -o runtime/stud_sol.out").c_str()) != 0)
         {
             add_result("Result: COMPILATION ERROR");
             judging_finished = true;
             screen->PostEvent(Event::Custom);
             return;
         }
-        std::system((compiler + " " + ref_filename + " -o ref_sol.out").c_str());
+        std::system((compiler + " " + ref_filename + " -o runtime/ref_sol.out").c_str());
     }
 
     auto cmd_stud = (lang_idx == 2)
-                        ? "python3 stud_sol.py < input.txt > stud_out.txt"
-                        : "./stud_sol.out < input.txt > stud_out.txt";
+                        ? "python3 runtime/stud_sol.py < runtime/input.txt > runtime/stud_out.txt"
+                        : "./runtime/stud_sol.out < runtime/input.txt > runtime/stud_out.txt";
     auto cmd_ref = (lang_idx == 2)
-                       ? "python3 ref_sol.py < input.txt > ref_out.txt"
-                       : "./ref_sol.out < input.txt > ref_out.txt";
+                       ? "python3 runtime/ref_sol.py < runtime/input.txt > runtime/ref_out.txt"
+                       : "./runtime/ref_sol.out < runtime/input.txt > runtime/ref_out.txt";
 
     std::vector<int> test_sizes = {1000, 3000, 5000, 8000, 12000};
 
