@@ -33,6 +33,14 @@ Component BuildCodeEditorView(AppState &state, JudgeEngine &engine)
 {
     InputOption input_opt;
     input_opt.multiline = true;
+
+    input_opt.transform = [](InputState state)
+    {
+        if (state.focused)
+            return state.element | color(Color::White);
+        return state.element;
+    };
+
     auto code_input = Input(&state.code_content, "Type your code here...", input_opt);
 
     auto btn_clear_code = Button(
