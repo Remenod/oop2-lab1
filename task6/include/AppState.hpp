@@ -3,7 +3,7 @@
 #include <vector>
 #include <mutex>
 
-enum class AppScreen
+enum class AppScreen : int
 {
     ProblemSelection = 0,
     CodeInput,
