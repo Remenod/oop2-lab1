@@ -6,15 +6,13 @@
 #include <random>
 #include <cstdlib>
 
-using namespace std::chrono;
-
 template <typename Func>
 long long MeasureTime(Func action)
 {
-    auto start = high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
     action();
-    auto end = high_resolution_clock::now();
-    return duration_cast<milliseconds>(end - start).count();
+    auto end = std::chrono::high_resolution_clock::now();
+    return duration_cast<std::chrono::milliseconds>(end - start).count();
 }
 
 void ValidateSorting(std::function<void()> ref_action, std::function<void()> stud_action,
