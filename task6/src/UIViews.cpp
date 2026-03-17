@@ -20,7 +20,7 @@ Component BuildProblemSelectionView(AppState &state)
         {
             return vbox(
                        {
-                           text("DMOJ Offline TUI - Select Problem") | bold | center,
+                           text("Offline Judgment - Select Problem") | bold | center,
                            separator(),
                            problem_menu->Render() | border,
                            btn_next->Render() | center //
