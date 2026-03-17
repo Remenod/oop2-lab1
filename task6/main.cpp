@@ -11,6 +11,7 @@
 #include <cstdlib>
 #include <functional>
 #include <random>
+#include "CodeGenerators.hpp"
 
 using namespace ftxui;
 using namespace std::chrono;
@@ -33,100 +34,6 @@ long long MeasureTime(Func action)
     action();
     auto end = high_resolution_clock::now();
     return duration_cast<milliseconds>(end - start).count();
-}
-
-std::string GetReferenceCode(int algo, int lang)
-{
-    if (lang == 2)
-        return algo == 0
-                   ? "n=int(input())\n"
-                     "arr=list(map(int, input().split()))\n"
-                     "for i in range(n):\n"
-                     " m=i\n"
-                     " for j in range(i+1,n):\n"
-                     "  if arr[j]<arr[m]: m=j\n"
-                     " arr[i],arr[m]=arr[m],arr[i]\n"
-                     "print(' '.join(map(str,arr)))"
-
-                   : "n=int(input())\n"
-                     "arr=list(map(int, input().split()))\n"
-                     "swapped=True\n"
-                     "start,end=0,n-1\n"
-                     "while swapped:\n"
-                     " swapped=False\n"
-                     " for i in range(start,end):\n"
-                     "  if arr[i]>arr[i+1]:\n"
-                     "   arr[i],arr[i+1]=arr[i+1],arr[i]\n"
-                     "   swapped=True\n"
-                     " if not swapped: break\n"
-                     " swapped=False\n"
-                     " end-=1\n"
-                     " for i in range(end-1,start-1,-1):\n"
-                     "  if arr[i]>arr[i+1]:\n"
-                     "   arr[i],arr[i+1]=arr[i+1],arr[i]\n"
-                     "   swapped=True\n"
-                     " start+=1\n"
-                     "print(' '.join(map(str,arr)))";
-
-    std::string inc = lang == 0
-                          ? "#include <stdio.h>\n"
-
-                          : "#include <iostream>\n"
-                            "using namespace std;\n";
-    std::string read = lang == 0
-                           ? "int n; scanf(\"%d\", &n); "
-                             "static int arr[50005]; "
-                             "for(int i=0;i<n;++i) "
-                             "    scanf(\"%d\", &arr[i]);\n"
-
-                           : "int n; "
-                             "cin >> n; "
-                             "static int arr[50005]; "
-                             "for(int i=0;i<n;++i) "
-                             "    cin >> arr[i];\n";
-    std::string print = lang == 0
-                            ? "for(int i=0;i<n;++i) "
-                              "printf(\"%d \", arr[i]);\n"
-                            : "for(int i=0;i<n;++i) "
-                              "    cout << arr[i] << \" \";\n";
-
-    std::string sort = algo == 0
-                           ? "for(int i=0;i<n-1;++i)"
-                             "{"
-                             "    int m=i;"
-                             "    for(int j=i+1;j<n;++j)"
-                             "        if(arr[j]<arr[m])m=j; "
-                             "    int t=arr[i];"
-                             "    arr[i]=arr[m];"
-                             "    arr[m]=t;"
-                             "}\n"
-
-                           : "int swapped=1, st=0, en=n-1; "
-                             "while(swapped)"
-                             "{"
-                             "    swapped=0; "
-                             "    for(int i=st;i<en;++i)"
-                             "    if(arr[i]>arr[i+1])"
-                             "    {"
-                             "        int t=arr[i];"
-                             "        arr[i]=arr[i+1];"
-                             "        arr[i+1]=t; swapped=1;"
-                             "    } "
-                             "    if(!swapped)break; "
-                             "    swapped=0; "
-                             "    --en;"
-                             "    for(int i=en-1;i>=st;--i)"
-                             "    if(arr[i]>arr[i+1])"
-                             "    {"
-                             "        int t=arr[i];"
-                             "        arr[i]=arr[i+1];"
-                             "        arr[i+1]=t; "
-                             "        swapped=1;"
-                             "    }"
-                             "    ++st;"
-                             "}\n";
-
-    return inc + "int main(){\n" + read + sort + print + "return 0;\n}";
 }
 
 void ValidateSorting(
@@ -208,7 +115,8 @@ void JudgeThread(ScreenInteractive *screen, int problem_idx, int lang_idx, std::
     out_stud.close();
 
     std::ofstream out_ref(ref_filename);
-    out_ref << GetReferenceCode(problem_idx, lang_idx);
+    out_ref << GetReferenceCode(static_cast<SolveProblem>(problem_idx),
+                                static_cast<SolveLanguage>(lang_idx));
     out_ref.close();
 
     if (lang_idx == 0 || lang_idx == 1)
