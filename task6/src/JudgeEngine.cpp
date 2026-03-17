@@ -51,8 +51,8 @@ void ValidateSorting(std::function<void()> ref_action, std::function<void()> stu
         return;
     }
 
-    long long lower_bound = std::max(0LL, t_eta / 5 - 200);
-    long long upper_bound = 5 * t_eta + 200;
+    long long lower_bound = t_eta / 2;
+    long long upper_bound = (t_eta * 15 / 10) + 50;
     std::string time_str = " (Ref: " + std::to_string(t_eta) + "ms, Stud: " + std::to_string(t_stud) + "ms)";
 
     if (t_stud < lower_bound)
