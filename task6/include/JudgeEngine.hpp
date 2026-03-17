@@ -6,7 +6,6 @@
 class JudgeEngine
 {
 public:
-    // Конструктор приймає колбек для оновлення екрану (Screen::PostEvent)
     explicit JudgeEngine(std::function<void()> ui_trigger);
     ~JudgeEngine();
 

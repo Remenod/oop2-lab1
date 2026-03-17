@@ -1,5 +1,5 @@
 #include "../include/JudgeEngine.hpp"
-#include "../include/CodeGenerators.hpp" // Ваш файл з GetReferenceCode та enum'ами
+#include "../include/CodeGenerators.hpp"
 #include <fstream>
 #include <filesystem>
 #include <chrono>
@@ -71,14 +71,14 @@ void JudgeEngine::StopAll()
 {
     if (worker_thread.joinable())
     {
-        worker_thread.join(); // Чекаємо завершення поточного тестування
+        worker_thread.join();
     }
 }
 
 void JudgeEngine::RunJudgingAsync(AppState &state)
 {
     state.ClearResults();
-    StopAll(); // Зупиняємо попередній потік, якщо він існував
+    StopAll();
     worker_thread = std::thread(&JudgeEngine::JudgingTask, this, &state);
 }
 
